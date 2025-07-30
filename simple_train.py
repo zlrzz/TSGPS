@@ -1,5 +1,4 @@
 import csv
-
 import pandas as pd
 import numpy as np
 from sklearn import linear_model
@@ -9,26 +8,17 @@ import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
-
 from file_transfer import get_pair_index_exact
 from data_process import length_eqaul
-
 from model import CNN, MLP, TransformerModel, TmpModel
 from sklearn.metrics import roc_curve, auc
 from sklearn.metrics import roc_auc_score
-
-'''Lasso regression to select the gene'''
-
 
 def Lasso_select(X_train, y_train):
     clf = linear_model.Lasso(alpha=0.01)
     clf.fit(X_train, y_train)
     lasso_coef_pair_index = np.nonzero(clf.coef_)[0]
     return clf.coef_, lasso_coef_pair_index
-
-
-'''Get delta in pair to form the data'''
-
 
 def get_delta(pair_index_exact, raw_gene):
     delta_in_pair_list = []
@@ -39,10 +29,6 @@ def get_delta(pair_index_exact, raw_gene):
         delta_in_pair_list.append(delta_in_pair)
     delta_in_pair_pandas = pd.concat(delta_in_pair_list, axis=1)
     return delta_in_pair_pandas
-
-
-'''Combine different data'''
-
 
 def combine_data(datasets):
     for name, label_name, pair_name in datasets:
@@ -69,12 +55,6 @@ def combine_data(datasets):
             label_concated = np.concatenate((label_concated, label), axis=0)
     return data_concated, label_concated
 
-
-
-
-'''Train simple CNN, Transformer and MLP model'''
-
-
 def train_model(data_train, data_test, label_train, label_test):
     data_train = torch.from_numpy(data_train).float().to('cuda')
     data_test = torch.from_numpy(data_test).float().to('cuda')
@@ -86,10 +66,6 @@ def train_model(data_train, data_test, label_train, label_test):
     num_epochs = 6000
     learning_rate = 0.0001
 
-    '''model selection'''
-    # model = MLP(input_size, num_classes).to('cuda')
-    # model = CNN(input_size, num_classes).to('cuda')
-    # model = TransformerModel(input_size, num_classes).to('cuda')
     model = TmpModel(input_size, num_classes).to('cuda')
 
     criterion = nn.CrossEntropyLoss()
@@ -109,7 +85,6 @@ def train_model(data_train, data_test, label_train, label_test):
         outputs = model(data_train)
         loss = criterion(outputs, label_train)
 
-        '''Early stopping'''
         if loss.item() >= old_loss:
             if loss.item() / old_loss >= 2:
                 print('The difference of loss too big! {}'.format(loss.item() / old_loss))
@@ -171,10 +146,7 @@ def train_model(data_train, data_test, label_train, label_test):
         total += label_test.size(0)
         correct += (predicted == label_test).sum().item()
 
-    # print('Test Accuracy of the MLP model on the test: {} %'.format(100 * correct / total))
-    # print('Test Accuracy of the CNN model on the test: {} %'.format(100 * correct / total))
-    # print('Test Accuracy of the Transformer model on the test: {} %'.format(100 * correct / total))
-    print('Test Accuracy of the Tmp model on the test: {} %'.format(100 * correct / total))
+    print('Test Accuracy of the model on the test: {} %'.format(100 * correct / total))
 
     print('The number of parameters: {}'.format(sum(p.numel() for p in model.parameters())))
     torch.save(model.state_dict(), './model.pth')
@@ -199,34 +171,8 @@ if __name__ == '__main__':
 
     train_data, test_data, train_label, test_label = train_test_split(data, label, test_size=0.2, random_state=22)
 
-    # _, a = Lasso_select(train_data, train_label)
-    # train_data = train_data[:, a]
-    # test_data = test_data[:, a]
-
     print('Size of train data: {}  Size of test data: {}'.format(train_data.shape, test_data.shape))
 
     train_model(train_data, test_data, train_label, test_label)
 
     print('Size of train data: {}  Size of test data: {}'.format(train_data.shape, test_data.shape))
-
-    # RF = RandomForestClassifier(n_estimators=100, random_state=22)
-    # RF.fit(train_data, train_label)
-    # # print('Test Accuracy of the baseline on the test: {} %'.format(RF.score(test_data, test_label) * 100))
-    #
-    # y_score = RF.predict_proba(test_data)
-    # fpr1, tpr1, thresholds1 = roc_curve(test_label, y_score[:, 1], pos_label=1)
-    # roc_auc1 = auc(fpr1, tpr1)
-    # fpr2, tpr2, thresholds2 = roc_curve(test_label, y_score[:, 2], pos_label=2)
-    # roc_auc2 = auc(fpr2, tpr2)
-    # plt.figure()
-    # lw = 2
-    # plt.plot(fpr1, tpr1, color='darkorange', lw=lw, label='ROC_b curve (area = %0.2f)' % roc_auc1)
-    # plt.plot(fpr2, tpr2, color='darkgreen', lw=lw, label='ROC_v curve (area = %0.2f)' % roc_auc2)
-    # plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    # plt.xlim([0.0, 1.0])
-    # plt.ylim([0.0, 1.05])
-    # plt.xlabel('False Positive Rate')
-    # plt.ylabel('True Positive Rate')
-    # plt.title('ROC')
-    # plt.legend()
-    # plt.savefig('./roc_base.png')
