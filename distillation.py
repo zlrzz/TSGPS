@@ -12,9 +12,6 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 
-'''Get delta in pair to form the data'''
-
-
 def get_delta(pair_index_exact, raw_gene):
     delta_in_pair_list = []
     for i in pair_index_exact:
@@ -25,20 +22,16 @@ def get_delta(pair_index_exact, raw_gene):
     delta_in_pair_pandas = pd.concat(delta_in_pair_list, axis=1)
     return delta_in_pair_pandas
 
-
-'''Combine different data'''
-
-
 def combine_data(datasets):
     for name, label_name, pair_name in datasets:
-        GSE = pd.read_csv('./dataset/Sepsis Data/%s' % name, index_col=0)
+        GSE = pd.read_csv('./dataset/RSV Data/%s' % name, index_col=0)
         # GSE = GSE.transpose()
         GSE = GSE.apply(np.log)
-        label = pd.read_csv('./dataset/Sepsis Data/%s' % label_name, index_col=0)
+        label = pd.read_csv('./dataset/RSV Data/%s' % label_name, index_col=0)
         GSE, label = length_eqaul(GSE, label)
 
         # label = ((label > 0) * 1).values # change the label to binary classification
-        pair_all = get_pair_index_exact('./iPAGE_result/Sepsis/%s' % pair_name)
+        pair_all = get_pair_index_exact('./iPAGE_result/RSV/%s' % pair_name)
         pair = pair_all[:35]
         delta_in_pair_pandas = get_delta(pair, GSE)
 
@@ -73,57 +66,57 @@ def distillation_learning(data_train, data_test, label_train, label_test):
     old_loss = 10000
     count = 0
 
-    teacher = TransformerModel(input_size, num_classes_teacher).to('cuda')
+    teacher = TmpModel(input_size, num_classes_teacher).to('cuda')
     student = TransformerModel(input_size, num_classes_student).to('cuda')
-    # student = MLP(input_size, num_classes_student).to('cuda')
 
     teacher.load_state_dict(torch.load('./d_model.pth'))
 
-    # optimizer = optim.AdamW(student.parameters(), lr=learning_rate)
-    # criterion = nn.CrossEntropyLoss()
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.9, patience=6, verbose=True,
-    #                                                        eps=1e-10)
-    #
-    # teacher.eval()
-    # student.train()
-    #
-    # for epoch in range(epochs):
-    #     optimizer.zero_grad()
-    #     with torch.no_grad():
-    #         teacher_logits = teacher(data_train)
-    #     student_logits = student(data_train)
-    #     soft_targets = F.softmax(teacher_logits / T, dim=-1)
-    #     soft_prob = F.log_softmax(student_logits / T, dim=-1)
-    #     soft_targets_loss = torch.sum(soft_targets * (soft_targets.log() - soft_prob)) / soft_prob.size()[0] * (T ** 2)
-    #     label_loss = criterion(student_logits, label_train)
-    #     loss = soft_target_loss_weight * soft_targets_loss + ce_loss_weight * label_loss
-    #
-    #     if loss.item() >= old_loss:
-    #         if loss.item() / old_loss >= 2:
-    #             print('The difference of loss too big! {}'.format(loss.item() / old_loss))
-    #             break
-    #         count += 1
-    #         # print('The difference of loss: {}'.format(loss.item() / old_loss))
-    #         if count == 19:
-    #             print('The loss is not decreasing! {}'.format(loss.item()))
-    #             break
-    #     else:
-    #         count = 0
-    #         old_loss = loss.item()
-    #
-    #     loss_list.append(loss.item())
-    #     loss.backward()
-    #     optimizer.step()
-    #     scheduler.step(loss)
-    #
-    #     if (epoch + 1) % 10 == 0:
-    #         print('Epoch [{}], Loss: {:.8f}'.format(epoch + 1, loss.item()))
-    #
-    # plt.figure(1)
-    # plt.plot(loss_list)
-    # plt.savefig('./d_loss.png')
+    optimizer = optim.AdamW(student.parameters(), lr=learning_rate)
+    criterion = nn.CrossEntropyLoss()
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.9, patience=6, verbose=True,
+                                                           eps=1e-10)
+    
+    teacher.eval()
+    student.train()
+    
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        with torch.no_grad():
+            teacher_logits = teacher(data_train)
+        student_logits = student(data_train)
+        soft_targets = F.softmax(teacher_logits / T, dim=-1)
+        soft_prob = F.log_softmax(student_logits / T, dim=-1)
+        soft_targets_loss = torch.sum(soft_targets * (soft_targets.log() - soft_prob)) / soft_prob.size()[0] * (T ** 2)
+        label_loss = criterion(student_logits, label_train)
+        loss = soft_target_loss_weight * soft_targets_loss + ce_loss_weight * label_loss
+    
+        if loss.item() >= old_loss:
+            if loss.item() / old_loss >= 2:
+                print('The difference of loss too big! {}'.format(loss.item() / old_loss))
+                break
+            count += 1
+            # print('The difference of loss: {}'.format(loss.item() / old_loss))
+            if count == 19:
+                print('The loss is not decreasing! {}'.format(loss.item()))
+                break
+        else:
+            count = 0
+            old_loss = loss.item()
+    
+        loss_list.append(loss.item())
+        loss.backward()
+        optimizer.step()
+        scheduler.step(loss)
+    
+        if (epoch + 1) % 10 == 0:
+            print('Epoch [{}], Loss: {:.8f}'.format(epoch + 1, loss.item()))
+    
+    plt.figure(1)
+    plt.plot(loss_list)
+    plt.savefig('./d_loss.png')
 
     teacher.eval()
+    student.eval()
 
     with torch.no_grad():
         outputs = student(data_test)
@@ -144,17 +137,17 @@ def distillation_learning(data_train, data_test, label_train, label_test):
         plt.legend()
         # plt.savefig('./d_roc.png')
 
-    # with torch.no_grad():
-    #     correct = 0
-    #     total = 0
-    #     student_logits = student(data_test)
-    #     _, predicted = torch.max(student_logits, 1)
-    #     predicted = (predicted >= 1) * 2
-    #     total += label_test.size(0)
-    #     correct += (predicted == label_test).sum().item()
-    #     print('Accuracy: {}%'.format(100 * correct / total))
-    #     print('The number of parameters: {}'.format(sum(p.numel() for p in student.parameters())))
-    #     torch.save(student.state_dict(), './d_1_model.pth')
+    with torch.no_grad():
+        correct = 0
+        total = 0
+        student_logits = student(data_test)
+        _, predicted = torch.max(student_logits, 1)
+        predicted = (predicted >= 1) * 2
+        total += label_test.size(0)
+        correct += (predicted == label_test).sum().item()
+        print('Accuracy: {}%'.format(100 * correct / total))
+        print('The number of parameters: {}'.format(sum(p.numel() for p in student.parameters())))
+        torch.save(student.state_dict(), './d_1_model.pth')
 
 
 if __name__ == '__main__':
@@ -175,10 +168,6 @@ if __name__ == '__main__':
             count += 1
 
     train_data, test_data, train_label, test_label = train_test_split(data, label, test_size=0.2, random_state=22)
-
-    # _, a = Lasso_select(train_data, train_label)
-    # train_data = train_data[:, a]
-    # test_data = test_data[:, a]
 
     print('Size of train data: {}  Size of test data: {}'.format(train_data.shape, test_data.shape))
 
