@@ -146,7 +146,7 @@ def train_model(data_train, data_test, label_train, label_test):
         total = 0
         outputs = model(data_test)
         _, predicted = torch.max(outputs.data, 1)
-        predicted = (predicted >= 1) * 1
+        predicted = (predicted >= 1) 
         total += label_test.size(0)
         correct += (predicted == label_test).sum().item()
 
@@ -219,3 +219,4 @@ if __name__ == '__main__':
 
     print('Size of train data: {}  Size of test data: {}'.format(train_data.shape, test_data.shape))
     print(list)
+
