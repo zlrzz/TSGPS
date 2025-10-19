@@ -13,7 +13,7 @@ The required environment is in requirements.txt. You can use following code to i
 pip install -r requirements.txt
 ```
 
-You can use data_process_PAGE.py to perform preliminary data processing.
+You can use data_process_PAGE.py to perform preliminary data processing to obtain gene pairs for training the model.
 ```
 python data_process_PAGE.py
 ```
