@@ -60,6 +60,6 @@ Prediction results include:
 - The performance of TSGPS using in Sepsis. Using cross validation.
 ![Performance of Student model using TSGPS](./fig/fig2.png)
 
-## 🤝 贡献指南
+## 🤝 Contribution
 In this study, we harnessed KD and pan-infection data for multiple pathogen prediction and infection-related disease diagnosis. After curating an integrated pan-infection dataset of over ten thousand samples, we used a coarse-to-fine teacher-student architecture based on KD and defined it as Teacher-Student Gene Pair Signature (TSGPS), which reduces the number of parameters of the model while improving prediction accuracy and facilitating clinical deployment. TSGPS can simultaneously and precisely diagnose six infections, including pan-infection, staphylococcal infection, streptococcal infection, HIV, RSV, and sepsis. 
 
