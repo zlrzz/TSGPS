@@ -3,7 +3,7 @@
 ## 📌 Introduction
 This repository implements the **TSGPS** framework described in the paper “Pan-Infection Foundation Framework Enables Multiple Pathogen Prediction.” By pre-training the Pan-Infection Foundation Model (PIFM), this framework achieves cross-species prediction capabilities for multiple pathogens, making it suitable for biomedical research, infectious disease surveillance, and precision medicine applications.
 
-![](./fig/fig1.png)
+![](./Figure/fig1.png)
 
 ## 🔬 Core Functionality
 - **Data Preprocessing**: Generate gene pair data required for training using `data_process_PAGE.py`
@@ -55,10 +55,10 @@ Prediction results include:
 
 ## 🔬 Result of TSGPS
 - The performance of Student model using TSGPS.
-![Performance of Student model using TSGPS](./fig/fig3.png)
+![Performance of Student model using TSGPS](./Figure/fig2.png)
 
-- The performance of TSGPS using in Sepsis. Using cross validation.
-![Performance of Student model using TSGPS](./fig/fig2.png)
+
+![Performance of Student model using TSGPS](./Figure/fig3.png)
 
 ## 🤝 Contribution
 In this study, we harnessed KD and pan-infection data for multiple pathogen prediction and infection-related disease diagnosis. After curating an integrated pan-infection dataset of over ten thousand samples, we used a coarse-to-fine teacher-student architecture based on KD and defined it as Teacher-Student Gene Pair Signature (TSGPS), which reduces the number of parameters of the model while improving prediction accuracy and facilitating clinical deployment. TSGPS can simultaneously and precisely diagnose six infections, including pan-infection, staphylococcal infection, streptococcal infection, HIV, RSV, and sepsis. 
